@@ -1,0 +1,13 @@
+az keyvault create --name my-key-vault --resource-group myResourceGroup --location eastus
+
+az keyvault secret set --vault-name my-key-vault --name DatabaseConnectionString --value "my-db-connection-string"
+
+
+##[section]Starting: Retrieve Secrets from Azure Key Vault
+Successfully retrieved secrets:
+- DatabaseConnectionString
+
+##[section]Starting: Deploy Application
+Using secret for deployment...
+Replacing placeholder <DB_CONNECTION_STRING> with retrieved secret.
+Deployment successful with secret: (Redacted)

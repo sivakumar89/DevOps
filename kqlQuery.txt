@@ -1,0 +1,6 @@
+// Analyze application logs for error patterns over the last 24 hours
+AppTraces
+| where Timestamp >= ago(24h)  // Filter logs from the last 24 hours
+| where SeverityLevel == "Error" or Message contains "Error"  // Filter logs with errors
+| summarize ErrorCount = count(), FirstOccurrence = min(Timestamp), LastOccurrence = max(Timestamp) by Message, Source, SeverityLevel
+| order by ErrorCount desc

@@ -1,0 +1,95 @@
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # azurerm_resource_group.aks_rg will be created
+  + resource "azurerm_resource_group" "aks_rg" {
+      + id       = (known after apply)
+      + location = "East US"
+      + name     = "aks-resource-group"
+      + tags     = (known after apply)
+    }
+
+  # azurerm_log_analytics_workspace.aks_la will be created
+  + resource "azurerm_log_analytics_workspace" "aks_la" {
+      + id                   = (known after apply)
+      + location             = "East US"
+      + name                 = "aks-log-analytics"
+      + resource_group_name  = "aks-resource-group"
+      + sku                  = "PerGB2018"
+      + tags                 = (known after apply)
+      + workspace_id         = (known after apply)
+    }
+
+  # azurerm_kubernetes_cluster.aks_cluster will be created
+  + resource "azurerm_kubernetes_cluster" "aks_cluster" {
+      + id                   = (known after apply)
+      + identity {
+          + principal_id = (known after apply)
+          + tenant_id    = (known after apply)
+          + type         = "SystemAssigned"
+        }
+      + location            = "East US"
+      + name                = "aks-cluster"
+      + resource_group_name = "aks-resource-group"
+      + tags                = {
+          + "environment" = "Production"
+        }
+
+      + addon_profile {
+          + oms_agent {
+              + enabled                    = true
+              + log_analytics_workspace_id = (known after apply)
+            }
+        }
+
+      + default_node_pool {
+          + name       = "default"
+          + node_count = 2
+          + vm_size    = "Standard_DS2_v2"
+        }
+    }
+
+Plan: 3 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+azurerm_resource_group.aks_rg: Creating...
+azurerm_resource_group.aks_rg: Creation complete after 2s [id=/subscriptions/{subscription_id}/resourceGroups/aks-resource-group]
+azurerm_log_analytics_workspace.aks_la: Creating...
+azurerm_log_analytics_workspace.aks_la: Creation complete after 5s [id=/subscriptions/{subscription_id}/resourceGroups/aks-resource-group/providers/Microsoft.OperationalInsights/workspaces/aks-log-analytics]
+azurerm_kubernetes_cluster.aks_cluster: Creating...
+azurerm_kubernetes_cluster.aks_cluster: Creation complete after 10m [id=/subscriptions/{subscription_id}/resourceGroups/aks-resource-group/providers/Microsoft.ContainerService/managedClusters/aks-cluster]
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+aks_cluster_name = "aks-cluster"
+aks_cluster_kube_config = <<EOT
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: <base64-encoded-certificate>
+    server: https://aks-cluster-dns.eastus.azmk8s.io:443
+  name: aks-cluster
+contexts:
+- context:
+    cluster: aks-cluster
+    user: clusterUser_aks-resource-group_aks-cluster
+  name: aks-cluster
+current-context: aks-cluster
+kind: Config
+preferences: {}
+users:
+- name: clusterUser_aks-resource-group_aks-cluster
+  user:
+    client-certificate-data: <base64-encoded-cert>
+    client-key-data: <base64-encoded-key>
+EOT
+log_analytics_workspace_id = "/subscriptions/{subscription_id}/resourceGroups/aks-resource-group/providers/Microsoft.OperationalInsights/workspaces/aks-log-analytics"

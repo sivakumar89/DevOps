@@ -1,0 +1,20 @@
+Starting: Install Dependencies
+[command]/usr/local/bin/npm install
+added 150 packages, and audited 151 packages in 4s
+
+Starting: Run Unit Tests
+[command]/usr/local/bin/npm test
+PASS tests/app.test.js
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+
+Starting: Publish Test Results
+[command]/usr/local/bin/npm publish
+Uploading results from path: **/test-results.xml
+
+Starting: Archive Application
+tar: app.tar.gz created successfully
+
+Starting: Publish Build Artifacts
+Publishing artifact drop to container
+Artifact successfully published.
