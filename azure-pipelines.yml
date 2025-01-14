@@ -1,0 +1,77 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+
+trigger:
+  branches:
+    include:
+      - main
+
+stages:
+  - stage: Dev
+    displayName: Deploy to Dev Environment
+    jobs:
+      - job: DeployDev
+        displayName: Deploy to Development
+        variables:
+          - group: Dev-Config # Link to Dev-specific variable group
+        steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              artifactName: 'drop'
+
+          - script: |
+              echo "Deploying to Dev..."
+              # Example deployment command
+              kubectl apply -f deployment-dev.yaml
+            displayName: "Deploy Application to Dev"
+
+  - stage: Test
+    displayName: Deploy to Test Environment
+    dependsOn: Dev
+    condition: succeeded()
+    jobs:
+      - job: DeployTest
+        displayName: Deploy to Test
+        variables:
+          - group: Test-Config # Link to Test-specific variable group
+        steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              artifactName: 'drop'
+
+          - script: |
+              echo "Deploying to Test..."
+              # Example deployment command
+              kubectl apply -f deployment-test.yaml
+            displayName: "Deploy Application to Test"
+
+  - stage: Prod
+    displayName: Deploy to Production Environment
+    dependsOn: Test
+    condition: succeeded()
+    jobs:
+      - deployment: DeployProd
+        displayName: Deploy to Production
+        environment: "production"
+        variables:
+          - group: Prod-Config # Link to Prod-specific variable group
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@0
+                  inputs:
+                    artifactName: 'drop'
+
+                - script: |
+                    echo "Deploying to Prod..."
+                    # Example deployment command
+                    kubectl apply -f deployment-prod.yaml
+                  displayName: "Deploy Application to Prod"
+
+                - script: |
+                    echo "Deployment successful!"
+                  displayName: "Post-Deployment Confirmation"
