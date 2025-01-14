@@ -1,0 +1,16 @@
+##[section]Starting: Build and Test
+[command]/usr/local/bin/npm install
+added 150 packages in 5s
+
+[command]/usr/local/bin/npm test
+PASS tests/app.test.js
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+
+##[section]Starting: Deploy to Azure App Service (Staging)
+Package deployment to my-app-service completed successfully.
+
+##[section]Starting: Deploy to AKS (Production)
+Authenticating with AKS...
+Applying deployment.yaml to AKS cluster...
+Deployment successful.

@@ -1,0 +1,140 @@
+# Kubernetes Networking Issue: Pod Communication Failure with External Services
+
+## **Issue Description**
+In an AKS (Azure Kubernetes Service) cluster, the application pods are unable to communicate with external services. Symptoms include:
+
+- Requests from pods to external APIs or services timing out.
+- Pods have no outbound internet connectivity.
+- `kubectl describe` and `kubectl logs` indicate errors such as `Connection timed out` or `Failed to connect to the external service`.
+
+---
+
+## **Investigation Steps**
+
+### 1. **Check Pod Logs**
+Run the following command to inspect logs for errors:
+```bash
+kubectl logs <pod-name>
+```
+**Example Output:**
+```
+Error: Connection to external-service.com timed out.
+```
+
+### 2. **Inspect Pod Details**
+Describe the pod to identify network issues:
+```bash
+kubectl describe pod <pod-name>
+```
+**Key Observations:**
+- Check the events section for DNS or network errors.
+- Verify if the `podIP` is assigned correctly.
+
+### 3. **Test Network Connectivity from Pod**
+Use a debug pod to test external connectivity:
+```bash
+kubectl run -it --rm debug-pod --image=busybox --restart=Never -- sh
+wget google.com
+```
+**Result:**
+If the connection fails, it confirms a networking issue.
+
+### 4. **Verify Kubernetes Network Policies**
+List network policies in the namespace:
+```bash
+kubectl get networkpolicy
+```
+- Ensure there are no policies blocking egress traffic from the pods.
+
+### 5. **Check AKS Configuration**
+- Verify the AKS cluster's virtual network (VNet) configuration in the Azure Portal.
+- Ensure the cluster has outbound internet access configured (e.g., via a NAT Gateway or Azure Firewall).
+
+### 6. **Inspect Azure NSG Rules**
+Check the Network Security Group (NSG) rules associated with the AKS node subnet:
+```bash
+az network nsg rule list --resource-group <resource-group> --nsg-name <nsg-name>
+```
+- Confirm that egress traffic to the internet is not being blocked.
+
+### 7. **DNS Configuration**
+Ensure CoreDNS is functioning correctly:
+```bash
+kubectl get pods -n kube-system -l k8s-app=kube-dns
+kubectl logs -n kube-system <coredns-pod>
+```
+- Look for DNS resolution failures in the logs.
+
+---
+
+## **Resolution Steps**
+
+### **Step 1: Fix Network Security Group Rules**
+- Add an NSG rule to allow outbound internet access:
+  ```bash
+  az network nsg rule create \
+    --resource-group <resource-group> \
+    --nsg-name <nsg-name> \
+    --name AllowInternetOutbound \
+    --priority 100 \
+    --direction Outbound \
+    --access Allow \
+    --protocol '*' \
+    --source-address-prefixes '*' \
+    --destination-address-prefixes Internet \
+    --destination-port-ranges '*'
+  ```
+
+### **Step 2: Update VNet Configuration**
+- Ensure a NAT Gateway or an Azure Firewall is configured for outbound traffic.
+
+### **Step 3: Correct DNS Configuration**
+- Restart CoreDNS pods to resolve potential DNS caching issues:
+  ```bash
+  kubectl rollout restart deployment coredns -n kube-system
+  ```
+- Verify DNS resolution:
+  ```bash
+  kubectl exec -it <pod-name> -- nslookup external-service.com
+  ```
+
+### **Step 4: Modify Network Policies**
+- Update network policies to allow egress traffic:
+  ```yaml
+  apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: allow-egress
+    namespace: default
+  spec:
+    podSelector: {}
+    policyTypes:
+    - Egress
+    egress:
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0
+  ```
+
+### **Step 5: Validate Connectivity**
+- Redeploy affected pods and verify connectivity:
+  ```bash
+  kubectl delete pod <pod-name>
+  ```
+- Test connectivity again using:
+  ```bash
+  kubectl exec -it <pod-name> -- curl https://external-service.com
+  ```
+
+---
+
+## **Conclusion**
+The root cause of the issue was identified as missing egress rules in the Network Security Group. After applying the necessary NSG rules, ensuring proper DNS resolution, and reviewing network policies, the pods successfully communicated with external services.
+
+**Next Steps:**
+- Monitor pod connectivity regularly.
+- Set up Azure Advisor alerts to track potential misconfigurations.
+- Periodically review AKS networking components for changes or updates.
+
+---
+

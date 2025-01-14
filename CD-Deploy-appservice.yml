@@ -1,0 +1,93 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  appServiceName: 'my-app-service'
+  resourceGroupName: 'my-resource-group'
+  aksClusterName: 'my-aks-cluster'
+  containerRegistry: 'mycontainerregistry.azurecr.io'
+  containerImage: 'sample-node-app:1.0'
+
+stages:
+  # Build Stage
+  - stage: Build
+    displayName: "Build and Test"
+    jobs:
+      - job: BuildAndTest
+        displayName: "Build and Test Application"
+        steps:
+          # Install Node.js
+          - task: UseNode@2
+            inputs:
+              version: '18.x'
+
+          # Install Dependencies
+          - script: npm install
+            displayName: "Install Dependencies"
+
+          # Run Unit Tests
+          - script: npm test
+            displayName: "Run Unit Tests"
+
+          # Publish Build Artifacts
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(System.DefaultWorkingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+
+  # Deploy to Azure App Service (Staging)
+  - stage: DeployToStaging
+    displayName: "Deploy to Azure App Service (Staging)"
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - deployment: StagingDeployment
+        displayName: "Deploy to Staging"
+        environment: "staging"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Deploy to Azure App Service
+                - task: AzureWebApp@1
+                  inputs:
+                    azureSubscription: 'my-azure-service-connection'
+                    appName: '$(appServiceName)'
+                    package: '$(Pipeline.Workspace)/drop'
+
+  # Deploy to AKS (Production)
+  - stage: DeployToProduction
+    displayName: "Deploy to AKS (Production)"
+    dependsOn: DeployToStaging
+    condition: succeeded()
+    jobs:
+      - deployment: ProductionDeployment
+        displayName: "Deploy to Production"
+        environment: "production"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Authenticate with AKS
+                - task: Kubernetes@1
+                  inputs:
+                    connectionType: 'Azure Resource Manager'
+                    azureSubscription: 'my-azure-service-connection'
+                    azureResourceGroup: '$(resourceGroupName)'
+                    kubernetesCluster: '$(aksClusterName)'
+                    namespace: 'default'
+                    command: 'apply'
+                    useConfigurationFile: true
+                    configuration: 'deployment.yaml'
+
+  # Approval Gates for Production
+    approvals:
+      - name: "Manual Approval"
+        reviewers:
+          - email: "teamlead@example.com"

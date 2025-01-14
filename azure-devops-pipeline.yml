@@ -1,0 +1,56 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+stages:
+  - stage: Build
+    displayName: "Build and Test"
+    jobs:
+      - job: BuildAndTest
+        displayName: "Build Application and Run Tests"
+        steps:
+          # Install Node.js
+          - task: UseNode@2
+            inputs:
+              version: '18.x'
+
+          # Install dependencies
+          - script: npm install
+            displayName: "Install Dependencies"
+
+          # Run Unit Tests
+          - script: npm test
+            displayName: "Run Unit Tests"
+
+          # Publish Test Results
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/test-results.xml'
+              failTaskOnFailedTests: true
+
+  - stage: Publish
+    displayName: "Publish Artifacts"
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PublishArtifacts
+        displayName: "Publish Build Artifacts"
+        steps:
+          # Archive the application
+          - script: tar -czf $(Build.ArtifactStagingDirectory)/app.tar.gz *
+            displayName: "Archive Application"
+
+          # Publish the artifact to Azure DevOps
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/app.tar.gz'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'

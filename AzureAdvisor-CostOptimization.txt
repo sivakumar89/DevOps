@@ -1,0 +1,98 @@
+# Cost Optimization Recommendations Using Azure Advisor
+
+## Overview
+Azure Advisor provides personalized recommendations to optimize your Azure resources, including suggestions for reducing costs. Based on the analysis of your Azure environment, here are actionable recommendations to save costs while maintaining performance and reliability.
+
+---
+
+## **Recommendations**
+
+### **1. Right-Size Virtual Machines**
+- **Observation**: Some virtual machines (VMs) are underutilized, running at an average CPU utilization of less than 20%.
+- **Recommendation**:
+  - Resize these VMs to smaller VM sizes or switch to burstable VM instances (e.g., B-series).
+  - Consider using Azure Spot Instances for non-critical workloads.
+- **Action**:
+  - Use the "Resize VM" option in the Azure portal.
+  - Schedule a downtime to resize VMs without impacting production workloads.
+
+### **2. Use Reserved Instances (RIs)**
+- **Observation**: Several VMs are running 24/7 but are billed at pay-as-you-go rates.
+- **Recommendation**:
+  - Purchase Azure Reserved Instances for 1-year or 3-year terms to save up to 72%.
+  - Evaluate workloads that are consistently running to determine eligibility for RIs.
+- **Action**:
+  - Navigate to the "Reservations" section in the Azure portal and purchase RIs for identified workloads.
+
+### **3. Optimize Storage Costs**
+- **Observation**: Unused managed disks and storage accounts with hot tier are incurring unnecessary costs.
+- **Recommendation**:
+  - Identify and delete unused managed disks.
+  - Move infrequently accessed data to lower-cost storage tiers (cool or archive).
+- **Action**:
+  - Use the Azure Storage Explorer to move data between tiers.
+  - Run Azure Advisor recommendations for orphaned disks.
+
+### **4. Enable Auto-Shutdown for Dev/Test Environments**
+- **Observation**: Virtual machines in dev/test environments are running 24/7 without auto-shutdown.
+- **Recommendation**:
+  - Enable auto-shutdown for all dev/test VMs to turn them off during non-business hours.
+- **Action**:
+  - Configure auto-shutdown in the Azure portal under VM > Operations > Auto-shutdown.
+
+### **5. Remove Idle Resources**
+- **Observation**: Idle resources such as load balancers, public IPs, and unused network interfaces are not in use but are being billed.
+- **Recommendation**:
+  - Identify and delete these idle resources.
+  - Use Azure Cost Management to track resource usage and identify unused resources.
+- **Action**:
+  - Review the "Cost Management + Billing" section in the Azure portal.
+
+### **6. Use Azure Hybrid Benefit**
+- **Observation**: Windows Server and SQL Server VMs are not using Azure Hybrid Benefit, incurring full license costs.
+- **Recommendation**:
+  - Activate Azure Hybrid Benefit to reuse on-premises licenses for significant savings.
+- **Action**:
+  - Configure Azure Hybrid Benefit under VM settings or during VM creation.
+
+### **7. Scale Down App Services and Databases**
+- **Observation**: Some App Service plans and Azure SQL Databases are over-provisioned.
+- **Recommendation**:
+  - Scale down App Services to lower pricing tiers based on usage.
+  - Use serverless or Hyperscale pricing tiers for databases with variable workloads.
+- **Action**:
+  - Use the Azure portal to adjust the pricing tier for App Services and SQL Databases.
+
+### **8. Implement Budget Alerts**
+- **Observation**: No budget alerts are configured, increasing the risk of unexpected cost overruns.
+- **Recommendation**:
+  - Set up budget alerts to monitor spending and send notifications when thresholds are exceeded.
+- **Action**:
+  - Go to "Cost Management + Billing" > "Budgets" and create a new budget.
+
+### **9. Leverage Free Azure Services**
+- **Observation**: Some services are running on paid tiers, even though free tiers are sufficient for the workload.
+- **Recommendation**:
+  - Review workloads to see if they can be shifted to free or lower-cost tiers.
+- **Action**:
+  - Check the "Free services" section in Azure Advisor and migrate eligible workloads.
+
+### **10. Consolidate Resources**
+- **Observation**: Multiple similar resources (e.g., storage accounts, VMs, databases) are deployed across regions.
+- **Recommendation**:
+  - Consolidate resources where possible to reduce overhead and simplify management.
+- **Action**:
+  - Migrate resources to a single region or subscription where appropriate.
+
+---
+
+## **Conclusion**
+By implementing the above recommendations, you can significantly reduce costs while ensuring that your Azure environment remains optimized for performance and reliability. Use Azure Advisor regularly to stay updated on new cost-saving opportunities.
+
+**Next Steps**:
+- Review and implement the recommended actions.
+- Set up recurring reviews in Azure Advisor.
+- Monitor cost savings in "Cost Management + Billing."
+
+---
+

@@ -1,0 +1,51 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Define Key Vault name
+  keyVaultName: 'mykeyvault'
+
+stages:
+  - stage: RetrieveSecrets
+    displayName: "Retrieve Secrets from Azure Key Vault"
+    jobs:
+      - job: RetrieveSecretsJob
+        displayName: "Retrieve Secrets Job"
+        steps:
+          # Azure Key Vault Task: Retrieve secrets
+          - task: AzureKeyVault@2
+            inputs:
+              azureSubscription: 'my-azure-service-connection'
+              KeyVaultName: '$(keyVaultName)'
+              SecretsFilter: '*'
+              RunAsPreJob: false
+
+          - script: |
+              echo "Retrieved secrets:"
+              echo "Database Connection String: $(DatabaseConnectionString)"
+            displayName: "Log Retrieved Secrets (Sensitive data must not be echoed in real pipelines)"
+
+  - stage: Deploy
+    displayName: "Deploy Application"
+    dependsOn: RetrieveSecrets
+    condition: succeeded()
+    jobs:
+      - job: DeployJob
+        displayName: "Deploy Application Job"
+        steps:
+          # Replace secrets in configuration files
+          - script: |
+              echo "Injecting secrets into configuration..."
+              sed -i "s|<DB_CONNECTION_STRING>|$(DatabaseConnectionString)|g" ./appsettings.json
+            displayName: "Inject Secrets into Config File"
+
+          # Simulate deployment (e.g., copy or deploy to a web server)
+          - script: |
+              echo "Deploying application..."
+              echo "Deployment successful!"
+            displayName: "Deploy Application"
